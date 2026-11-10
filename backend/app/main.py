@@ -1,6 +1,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.routes.auth import router as auth_router
 
 app = FastAPI(
     title="Kindred API",
@@ -12,6 +13,8 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
 ]
+
+app.include_router(auth_router)
 
 # Configuração do CORS.
 app.add_middleware(
