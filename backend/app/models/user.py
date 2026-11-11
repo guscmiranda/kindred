@@ -11,6 +11,8 @@ from app.models.base import Base
 
 if TYPE_CHECKING:
     from app.models.profile import Profile
+    from app.models.user_interest import UserInterest
+    from app.models.place_manager import PlaceManager
 
 
 class User(Base):
@@ -45,6 +47,13 @@ class User(Base):
         server_default=text("true"),
     )
 
+    is_admin: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -63,4 +72,14 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
         uselist=False,
+    )
+
+    interest_associations: Mapped[list[UserInterest]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    managed_places: Mapped[list[PlaceManager]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
