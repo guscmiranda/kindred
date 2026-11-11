@@ -1,13 +1,13 @@
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.schemas.auth import (
     RegisterRequest,
     RegisterResponse,
     LoginRequest,
-    LoginResponse,
 )
 
 from app.services.auth import (
@@ -61,9 +61,11 @@ def register(
         bio=profile.bio,
     )
 
-@router.post("/login", response_model=LoginResponse)
+
+@router.post("/login")
 def login(
     data: LoginRequest,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     try:
@@ -81,10 +83,32 @@ def login(
 
     access_token = create_access_token(user.id)
 
-    return LoginResponse(
-        access_token=access_token,
-        token_type="bearer",
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.environment == "production",
+        samesite="lax",
+        max_age=settings.access_token_expire_minutes * 60,
+        path="/",
     )
+
+    return {
+        "message": "Login realizado com sucesso."
+    }
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=settings.environment == "production",
+        samesite="lax",
+        path="/",
+    )
+
+    return {"message": "Logout realizado com sucesso."}
+
 
 @router.get("/me", response_model=RegisterResponse)
 def get_me(

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, model_validator
 from uuid import UUID
-
+from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 class ProfileUpdateRequest(BaseModel):
@@ -20,10 +20,11 @@ class ProfileUpdateRequest(BaseModel):
     pfp_url: str | None = None
     banner_url: str | None = None
     location: str | None = None
+    visibility: Literal["public", "private"] | None = None
 
     @model_validator(mode="after")
     def validate_required_fields(self):
-        for field in ("username", "display_name"):
+        for field in ("username", "display_name", "visibility"):
             if field in self.model_fields_set and getattr(self, field) is None:
                 raise ValueError(f"{field} não pode ser nulo.")
 

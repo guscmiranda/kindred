@@ -3,7 +3,7 @@ from pathlib import Path
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
-
+from typing import Literal
 
 # Localiza o .env na raiz do projeto.
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     postgres_host: str = "127.0.0.1"
     postgres_port: int = 5433
 
+    # Ambiente de execução da aplicação.
+    environment: Literal["development", "production"] = "development"
+    
     # Configurações dos tokens JWT.
     jwt_secret_key: SecretStr
     jwt_algorithm: str = "HS256"
