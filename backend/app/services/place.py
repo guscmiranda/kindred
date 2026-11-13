@@ -82,6 +82,7 @@ def list_places(
     db: Session,
     name: str | None = None,
     category: str | None = None,
+    attributes: dict[str, list[str]] | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> PlaceListResponse:
@@ -96,6 +97,15 @@ def list_places(
         filters.append(
             Place.categories.any(PlaceCategory.slug == category)
         )
+
+    if attributes:
+        for group, slugs in attributes.items():
+            attr_filter = Place.attributes.any(
+                (PlaceAttribute.group == group)
+                & (PlaceAttribute.slug.in_(slugs))
+                & (PlaceAttribute.is_active.is_(True))
+            )
+            filters.append(attr_filter)
 
     total = db.scalar(
         select(func.count(Place.id)).where(*filters)
@@ -121,6 +131,7 @@ def list_places(
         limit=limit,
         offset=offset,
     )
+
 
 def get_place_by_id(
     db: Session,

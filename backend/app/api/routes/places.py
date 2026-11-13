@@ -36,21 +36,56 @@ router = APIRouter(prefix="/places", tags=["Places"])
     "",
     response_model=PlaceListResponse,
 )
-
 def get_places(
     name: str | None = Query(default=None, min_length=1),
     category: str | None = Query(default=None, min_length=1),
+    attribute: list[str] | None = Query(default=None),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
 ):
+    attributes = None
+
+    if attribute:
+        attributes = {}
+
+        for item in attribute:
+            try:
+                group, slug = item.split(":", maxsplit=1)
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Características devem seguir o formato grupo:slug.",
+                )
+
+            if group not in (
+                "ambience",
+                "activities",
+                "music",
+                "audience",
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Grupo de característica inválido: {group}.",
+                )
+
+            if not slug:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="O identificador da característica não pode ser vazio.",
+                )
+
+            attributes.setdefault(group, []).append(slug)
+
     return list_places(
         db=db,
         name=name,
         category=category,
+        attributes=attributes,
         limit=limit,
         offset=offset,
     )
+
 
 @router.post(
     "/{place_id}/activate",

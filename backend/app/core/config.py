@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     postgres_host: str = "127.0.0.1"
     postgres_port: int = 5433
 
+    # Configurações do modelo de IA (Ollama).
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen3:1.7b"
+    ollama_timeout: int = 120
+
+
     # Ambiente de execução da aplicação.
     environment: Literal["development", "production"] = "development"
     

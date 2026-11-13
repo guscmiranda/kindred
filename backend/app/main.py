@@ -5,6 +5,7 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.profiles import router as profiles_router
 from app.api.routes.interests import router as interests_router
 from app.api.routes.places import router as places_router
+from app.api.routes.agents import router as agents_router
 
 app = FastAPI(
     title="Kindred API",
@@ -21,6 +22,7 @@ app.include_router(auth_router)
 app.include_router(profiles_router)
 app.include_router(interests_router)
 app.include_router(places_router)
+app.include_router(agents_router)
 # Configuração do CORS.
 app.add_middleware(
     CORSMiddleware,
