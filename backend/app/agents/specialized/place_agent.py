@@ -1,7 +1,6 @@
 
 import json
 import unicodedata
-from unittest import result
 
 from sqlalchemy.orm import Session
 
@@ -14,6 +13,7 @@ from app.tools.places import (
 )
 
 
+
 SYSTEM_PROMPT = """
 Você é o agente especializado em descoberta de lugares do Kindred.
 
@@ -21,24 +21,46 @@ Sua responsabilidade é ajudar usuários a encontrar estabelecimentos
 que correspondam às suas descrições e preferências.
 
 Instruções:
+
+**Idioma e comunicação:**
 - Responda sempre em português do Brasil.
+- Apresente os resultados de maneira natural, clara e objetiva.
+- Utilize os termos "estabelecimento" ou "lugar", sem presumir
+  que um resultado pertence a uma única categoria.
+- Não utilize nomes técnicos dos grupos de atributos, como
+  "ambience", "activities", "music" ou "audience".
+  Utilize seus equivalentes em português.
+
+**Busca e interpretação:**
 - Utilize search_places quando precisar descobrir lugares.
-- Não invente estabelecimentos nem características.
-- Utilize somente os slugs existentes no catálogo.
-- Passe características usando os parâmetros ambience, activities,
+- Utilize somente categorias e slugs existentes no catálogo.
+- Passe características pelos parâmetros ambience, activities,
   music e audience.
 - Só utilize category quando o usuário especificar uma categoria.
 - Não deduza categorias a partir do ambiente ou das atividades.
-- Não invente informações que não estejam nos resultados da ferramenta.
-- Apresente os resultados de maneira natural e objetiva.
-- Utilize a palavra estabelecimento ou lugar ao se referir aos
-  resultados, sem presumir que pertencem a uma única categoria.
-- Não afirme que um estabelecimento é ideal ou garante determinada
-  experiência. Explique apenas quais características correspondem
-  ao que o usuário procura.
-- Se nenhum estabelecimento for encontrado, informe isso claramente.
-"""
 
+**Confiabilidade das informações:**
+- Não invente estabelecimentos, características ou informações.
+- Descreva somente características presentes nos resultados
+  retornados pela ferramenta.
+- Não presuma características com base em categorias ou
+  estereótipos associados aos estabelecimentos.
+- Não apresente características como comuns, prováveis ou típicas
+  de uma categoria sem que estejam nos dados retornados.
+- Quando uma informação não estiver disponível nos resultados,
+  simplesmente não a mencione.
+
+**Apresentação dos resultados:**
+- Explique objetivamente quais características cadastradas
+  correspondem à solicitação do usuário.
+- Não utilize expressões avaliativas como "ideal", "perfeito",
+  "excelente" ou "melhor opção".
+- Não afirme que um estabelecimento atende completamente
+  às necessidades do usuário ou garante determinada experiência.
+- Evite repetir informações desnecessariamente.
+- Se nenhum estabelecimento for encontrado, informe isso
+  claramente.
+"""
 
 MAX_TOOL_ROUNDS = 3
 
@@ -188,7 +210,7 @@ def execute_tool(
 async def run_place_agent(
     db: Session,
     user_message: str,
-) -> str:
+) -> dict:
     """
     Executa o agente de descoberta de lugares.
 
@@ -236,6 +258,8 @@ async def run_place_agent(
         },
     ]
 
+    found_places = {}
+
     for _ in range(MAX_TOOL_ROUNDS):
         response = await chat(
             messages=messages,
@@ -247,7 +271,13 @@ async def run_place_agent(
         tool_calls = assistant_message.get("tool_calls", [])
 
         if not tool_calls:
-            return assistant_message.get("content", "")
+            places = list(found_places.values())
+
+            return {
+                "response": assistant_message.get("content", ""),
+                "places": places,
+                "total": len(places),
+            }
 
         messages.append(assistant_message)
 
@@ -270,6 +300,10 @@ async def run_place_agent(
                 tool_result = {
                     "error": str(error),
                 }
+
+            if "items" in tool_result:
+                for place in tool_result["items"]:
+                    found_places[str(place["id"])] = place
 
             messages.append(
                 {

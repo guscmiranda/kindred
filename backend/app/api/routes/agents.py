@@ -22,9 +22,8 @@ async def search_places_with_agent(
     _current_user: User = Depends(get_current_user),
 ):
     try:
-        response = await run_place_agent(db, data.message)
-
-        return PlaceSearchResponse(response=response)
+        result = await run_place_agent(db, data.message)
+        return PlaceSearchResponse(**result)
 
     except httpx.RequestError:
         raise HTTPException(
