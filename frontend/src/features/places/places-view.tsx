@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 
 import { ApiError } from "@/services/api";
 
@@ -12,6 +13,7 @@ import {
 } from "./services";
 
 import type {
+    AgentPlace,
     Place,
     PlaceCategory,
 } from "./types";
@@ -28,9 +30,10 @@ export function PlacesView() {
 
     const [agentMessage, setAgentMessage] = useState("");
     const [agentResponse, setAgentResponse] = useState<string | null>(null);
+    const [agentPlaces, setAgentPlaces] = useState<AgentPlace[]>([]);
+    const [agentTotal, setAgentTotal] = useState(0);
     const [agentLoading, setAgentLoading] = useState(false);
     const [agentError, setAgentError] = useState<string | null>(null);
-
 
     useEffect(() => {
         async function loadCategories() {
@@ -89,9 +92,14 @@ export function PlacesView() {
             setAgentError(null);
             setAgentResponse(null);
 
+            setAgentPlaces([]);
+            setAgentTotal(0);
+
             const result = await searchPlacesWithAgent(message);
 
             setAgentResponse(result.response);
+            setAgentPlaces(result.places);
+            setAgentTotal(result.total);
         } catch (err) {
             if (err instanceof ApiError) {
                 setAgentError(err.message);
@@ -103,19 +111,27 @@ export function PlacesView() {
         }
     }
 
-
     return (
         <main className="min-h-screen bg-gray-50">
             <div className="mx-auto max-w-6xl px-6 py-10">
-                <header className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Explorar lugares
-                    </h1>
+                <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">
+                            Explorar lugares
+                        </h1>
 
-                    <p className="mt-2 text-gray-600">
-                        Descubra estabelecimentos e encontre lugares
-                        que combinam com seus interesses.
-                    </p>
+                        <p className="mt-2 text-gray-600">
+                            Descubra estabelecimentos e encontre lugares
+                            que combinam com seus interesses.
+                        </p>
+                    </div>
+
+                    <Link
+                        href="/places/new"
+                        className="inline-flex items-center justify-center rounded-lg bg-purple-600 px-5 py-2.5 font-medium text-white transition hover:bg-purple-700"
+                    >
+                        Cadastrar lugar
+                    </Link>
                 </header>
 
                 <section className="mb-8 rounded-xl border border-purple-200 bg-white p-6 shadow-sm">
@@ -164,6 +180,67 @@ export function PlacesView() {
                             <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-700">
                                 {agentResponse}
                             </p>
+
+                            <div className="mt-5">
+                                <h4 className="mb-3 font-semibold text-gray-900">
+                                    Estabelecimentos encontrados ({agentTotal})
+                                </h4>
+
+                                {agentPlaces.length === 0 ? (
+                                    <p className="text-sm text-gray-600">
+                                        Nenhum estabelecimento encontrado para sua busca.
+                                    </p>
+                                ) : (
+                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                        {agentPlaces.map((place) => (
+                                            <Link
+                                                key={place.id}
+                                                href={`/places/${place.id}`}
+                                                className="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-purple-300 hover:shadow-md"
+                                            >
+                                                <h5 className="text-lg font-semibold text-gray-900">
+                                                    {place.name}
+                                                </h5>
+
+                                                <p className="mt-2 text-sm text-gray-600">
+                                                    {place.description ||
+                                                        "Nenhuma descrição disponível."}
+                                                </p>
+
+                                                <p className="mt-3 text-sm text-gray-500">
+                                                    {place.address}
+                                                </p>
+
+                                                {place.categories.length > 0 && (
+                                                    <div className="mt-4 flex flex-wrap gap-2">
+                                                        {place.categories.map((category) => (
+                                                            <span
+                                                                key={category.slug}
+                                                                className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700"
+                                                            >
+                                                                {category.name}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {place.attributes.length > 0 && (
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                        {place.attributes.map((attribute) => (
+                                                            <span
+                                                                key={`${attribute.group}-${attribute.slug}`}
+                                                                className="rounded-full bg-purple-100 px-2.5 py-1 text-xs text-purple-800"
+                                                            >
+                                                                {attribute.name}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </section>
@@ -241,59 +318,50 @@ export function PlacesView() {
                             ) : (
                                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                                     {places.map((place) => (
-                                        <a
+                                        <Link
                                             key={place.id}
                                             href={`/places/${place.id}`}
                                             className="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-purple-300 hover:shadow-md"
                                         >
-                                            <article
-                                                key={place.id}
-                                                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
-                                            >
-                                                <h3 className="text-lg font-semibold text-gray-900">
-                                                    {place.name}
-                                                </h3>
+                                            <h3 className="text-lg font-semibold text-gray-900">
+                                                {place.name}
+                                            </h3>
 
-                                                <p className="mt-2 text-sm text-gray-600">
-                                                    {place.description ||
-                                                        "Nenhuma descrição disponível."}
-                                                </p>
+                                            <p className="mt-2 text-sm text-gray-600">
+                                                {place.description ||
+                                                    "Nenhuma descrição disponível."}
+                                            </p>
 
-                                                <p className="mt-3 text-sm text-gray-500">
-                                                    {place.address}
-                                                </p>
+                                            <p className="mt-3 text-sm text-gray-500">
+                                                {place.address}
+                                            </p>
 
-                                                {place.categories.length > 0 && (
-                                                    <div className="mt-4 flex flex-wrap gap-2">
-                                                        {place.categories.map(
-                                                            (category) => (
-                                                                <span
-                                                                    key={category.id}
-                                                                    className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700"
-                                                                >
-                                                                    {category.name}
-                                                                </span>
-                                                            )
-                                                        )}
-                                                    </div>
-                                                )}
+                                            {place.categories.length > 0 && (
+                                                <div className="mt-4 flex flex-wrap gap-2">
+                                                    {place.categories.map((category) => (
+                                                        <span
+                                                            key={category.id}
+                                                            className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700"
+                                                        >
+                                                            {category.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
 
-                                                {place.attributes.length > 0 && (
-                                                    <div className="mt-3 flex flex-wrap gap-2">
-                                                        {place.attributes.map(
-                                                            (attribute) => (
-                                                                <span
-                                                                    key={attribute.id}
-                                                                    className="rounded-full bg-purple-50 px-2.5 py-1 text-xs text-purple-700"
-                                                                >
-                                                                    {attribute.name}
-                                                                </span>
-                                                            )
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </article>
-                                        </a>
+                                            {place.attributes.length > 0 && (
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                    {place.attributes.map((attribute) => (
+                                                        <span
+                                                            key={attribute.id}
+                                                            className="rounded-full bg-purple-50 px-2.5 py-1 text-xs text-purple-700"
+                                                        >
+                                                            {attribute.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </Link>
                                     ))}
                                 </div>
                             )}

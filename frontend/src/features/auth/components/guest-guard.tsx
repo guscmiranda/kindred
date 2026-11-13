@@ -15,7 +15,7 @@ export function GuestGuard({ children }: GuestGuardProps) {
 
     useEffect(() => {
         if (status === "authenticated") {
-            router.replace("/profile");
+            router.replace("/home");
         }
     }, [status, router]);
 

@@ -45,3 +45,23 @@ export interface ManagedPlace {
     place: Place;
     role: "owner" | "admin" | "editor";
 }
+
+export interface AgentPlaceCategory {
+    name: string;
+    slug: string;
+}
+
+export interface AgentPlaceAttribute {
+    group: PlaceAttributeGroup;
+    name: string;
+    slug: string;
+}
+
+export interface AgentPlace {
+    id: string;
+    name: string;
+    description: string | null;
+    address: string;
+    categories: AgentPlaceCategory[];
+    attributes: AgentPlaceAttribute[];
+}

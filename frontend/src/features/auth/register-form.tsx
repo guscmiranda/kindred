@@ -2,10 +2,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { ApiError } from "@/services/api";
-import { registerUser } from "./services";
+import { useAuth } from "@/features/auth/auth-context";
+
+import {
+    registerUser,
+    loginUser,
+} from "./services";
 
 export function RegisterForm() {
+    const router = useRouter();
+    const { refreshUser } = useAuth();
+
     const [form, setForm] = useState({
         email: "",
         password: "",
@@ -16,7 +26,6 @@ export function RegisterForm() {
     });
 
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
 
     function handleChange(
@@ -36,8 +45,9 @@ export function RegisterForm() {
         event.preventDefault();
 
         setError("");
-        setSuccess(false);
         setLoading(true);
+
+        let accountCreated = false;
 
         try {
             await registerUser({
@@ -45,20 +55,27 @@ export function RegisterForm() {
                 bio: form.bio.trim() || undefined,
             });
 
-            setSuccess(true);
-            setForm({
-                email: "",
-                password: "",
-                date_of_birth: "",
-                username: "",
-                display_name: "",
-                bio: "",
+            accountCreated = true;
+
+            await loginUser({
+                email: form.email,
+                password: form.password,
             });
+
+            await refreshUser();
+
+            router.replace("/home");
         } catch (err) {
-            if (err instanceof ApiError) {
+            if (accountCreated) {
+                setError(
+                    "Conta criada, mas não foi possível entrar automaticamente. Tente fazer login."
+                );
+            } else if (err instanceof ApiError) {
                 setError(err.message);
             } else {
-                setError("Não foi possível realizar o cadastro. Tente novamente.");
+                setError(
+                    "Não foi possível realizar o cadastro. Tente novamente."
+                );
             }
         } finally {
             setLoading(false);
@@ -141,14 +158,8 @@ export function RegisterForm() {
                 </p>
             )}
 
-            {success && (
-                <p role="status" className="text-green-700">
-                    Cadastro realizado com sucesso!
-                </p>
-            )}
-
             <button type="submit" disabled={loading}>
-                {loading ? "Cadastrando..." : "Criar conta"}
+                {loading ? "Criando conta..." : "Criar conta"}
             </button>
         </form>
     );

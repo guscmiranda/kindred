@@ -36,7 +36,7 @@ export function LoginForm() {
             await loginUser(form);
             await refreshUser();
 
-            router.replace("/profile");
+            router.replace("/home");
         } catch (err) {
             if (err instanceof ApiError) {
                 setError(err.message);

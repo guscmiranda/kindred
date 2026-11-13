@@ -1,10 +1,10 @@
 import { ProfileView } from "@/features/profile/profile-view";
-import { AuthGuard } from "@/features/auth/components/auth-guard";
+import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
 
 export default function ProfilePage() {
     return (
-        <AuthGuard>
+        <AuthenticatedLayout>
             <ProfileView />
-        </AuthGuard>
+        </AuthenticatedLayout>
     );
 }

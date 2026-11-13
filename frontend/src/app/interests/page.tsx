@@ -1,11 +1,10 @@
-
-import { AuthGuard } from "@/features/auth/components/auth-guard";
 import { InterestsView } from "@/features/interests/interests-view";
+import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
 
 export default function InterestsPage() {
     return (
-        <AuthGuard>
+        <AuthenticatedLayout>
             <InterestsView />
-        </AuthGuard>
+        </AuthenticatedLayout>
     );
 }

@@ -2,6 +2,7 @@
 import { apiFetch } from "@/services/api";
 
 import type {
+    AgentPlace,
     ManagedPlace,
     Place,
     PlaceAttribute,
@@ -39,6 +40,8 @@ export interface PlaceUpdateData {
 
 export interface PlaceAgentSearchResponse {
     response: string;
+    places: AgentPlace[];
+    total: number;
 }
 
 export function getPlaces(

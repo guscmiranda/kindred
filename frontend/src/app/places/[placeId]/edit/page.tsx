@@ -1,4 +1,3 @@
-import { AuthGuard } from "@/features/auth/components/auth-guard";
 import { EditPlaceView } from "@/features/places/edit-place-view";
 
 interface EditPlacePageProps {
@@ -10,9 +9,5 @@ export default async function EditPlacePage({
 }: EditPlacePageProps) {
     const { placeId } = await params;
 
-    return (
-        <AuthGuard>
-            <EditPlaceView placeId={placeId} />
-        </AuthGuard>
-    );
+    return <EditPlaceView placeId={placeId} />;
 }
