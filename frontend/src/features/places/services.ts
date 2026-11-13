@@ -37,6 +37,10 @@ export interface PlaceUpdateData {
     attribute_ids: string[];
 }
 
+export interface PlaceAgentSearchResponse {
+    response: string;
+}
+
 export function getPlaces(
     filters: PlaceFilters = {}
 ): Promise<PlaceListResponse> {
@@ -126,4 +130,19 @@ export function activatePlace(placeId: string): Promise<Place> {
     return apiFetch<Place>(`/places/${placeId}/activate`, {
         method: "POST",
     });
+}
+
+export function searchPlacesWithAgent(
+    message: string
+): Promise<PlaceAgentSearchResponse> {
+    return apiFetch<PlaceAgentSearchResponse>(
+        "/agents/places/search",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message }),
+        }
+    );
 }

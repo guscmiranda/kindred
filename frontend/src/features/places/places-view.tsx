@@ -1,13 +1,14 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { ApiError } from "@/services/api";
 
 import {
     getPlaceCategories,
     getPlaces,
+    searchPlacesWithAgent,
 } from "./services";
 
 import type {
@@ -24,6 +25,12 @@ export function PlacesView() {
 
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
+
+    const [agentMessage, setAgentMessage] = useState("");
+    const [agentResponse, setAgentResponse] = useState<string | null>(null);
+    const [agentLoading, setAgentLoading] = useState(false);
+    const [agentError, setAgentError] = useState<string | null>(null);
+
 
     useEffect(() => {
         async function loadCategories() {
@@ -68,6 +75,35 @@ export function PlacesView() {
         return () => clearTimeout(timeoutId);
     }, [search, selectedCategory]);
 
+    async function handleAgentSearch(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        const message = agentMessage.trim();
+
+        if (!message) {
+            return;
+        }
+
+        try {
+            setAgentLoading(true);
+            setAgentError(null);
+            setAgentResponse(null);
+
+            const result = await searchPlacesWithAgent(message);
+
+            setAgentResponse(result.response);
+        } catch (err) {
+            if (err instanceof ApiError) {
+                setAgentError(err.message);
+            } else {
+                setAgentError("Não foi possível realizar a busca inteligente.");
+            }
+        } finally {
+            setAgentLoading(false);
+        }
+    }
+
+
     return (
         <main className="min-h-screen bg-gray-50">
             <div className="mx-auto max-w-6xl px-6 py-10">
@@ -81,6 +117,56 @@ export function PlacesView() {
                         que combinam com seus interesses.
                     </p>
                 </header>
+
+                <section className="mb-8 rounded-xl border border-purple-200 bg-white p-6 shadow-sm">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                        Descubra com o Kindred
+                    </h2>
+
+                    <p className="mt-2 text-sm text-gray-600">
+                        Descreva o tipo de lugar que você procura e deixe nosso
+                        agente ajudar na descoberta.
+                    </p>
+
+                    <form onSubmit={handleAgentSearch} className="mt-4">
+                        <textarea
+                            value={agentMessage}
+                            onChange={(event) => setAgentMessage(event.target.value)}
+                            placeholder="Ex.: Quero um lugar tranquilo onde eu possa conversar e ouvir música alternativa."
+                            rows={3}
+                            maxLength={1000}
+                            className="w-full resize-y rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-purple-500"
+                        />
+
+                        <div className="mt-3 flex justify-end">
+                            <button
+                                type="submit"
+                                disabled={agentLoading || !agentMessage.trim()}
+                                className="rounded-lg bg-purple-600 px-5 py-2.5 font-medium text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {agentLoading ? "Buscando..." : "Buscar com IA"}
+                            </button>
+                        </div>
+                    </form>
+
+                    {agentError && (
+                        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+                            <p className="text-sm text-red-700">{agentError}</p>
+                        </div>
+                    )}
+
+                    {agentResponse && (
+                        <div className="mt-5 rounded-lg bg-purple-50 p-4">
+                            <h3 className="font-semibold text-gray-900">
+                                Resultado da busca
+                            </h3>
+
+                            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                                {agentResponse}
+                            </p>
+                        </div>
+                    )}
+                </section>
 
                 <section className="mb-8 flex flex-col gap-4 sm:flex-row">
                     <input
